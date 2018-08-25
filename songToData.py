@@ -3,6 +3,7 @@ from subprocess import Popen, PIPE, STDOUT
 import os
 from PIL import Image
 import eyed3
+import csv
 
 from sliceSpectrogram import createSlicesFromSpectrograms
 from audioFilesTools import isMono, getGenre
@@ -18,6 +19,11 @@ currentPath = os.path.dirname(os.path.realpath(__file__))
 
 #Remove logs
 eyed3.log.setLevel("ERROR")
+
+#Read dictionary of genre
+with open('Data/Raw/subset_train.csv', mode='r') as csv_file:
+    reader = csv.reader(csv_file)
+    genreData = dict((rows[0],rows[1]) for rows in reader)
 
 #Create spectrogram from mp3 files
 def createSpectrogram(filename,newFilename):
@@ -40,7 +46,8 @@ def createSpectrogram(filename,newFilename):
 		print errors
 
 	#Remove tmp mono track
-	os.remove("/tmp/{}.mp3".format(newFilename))
+	if isMono(rawDataPath+filename):
+		os.remove("/tmp/{}.mp3".format(newFilename))
 
 #Creates .png whole spectrograms from mp3 files
 def createSpectrogramsFromAudio():
@@ -60,7 +67,8 @@ def createSpectrogramsFromAudio():
 	#Rename files according to genre
 	for index,filename in enumerate(files):
 		print "Creating spectrogram for file {}/{}...".format(index+1,nbFiles)
-		fileGenre = getGenre(rawDataPath+filename)
+		# fileGenre = getGenre(rawDataPath+filename)
+		fileGenre = genreData[filename]
 		genresID[fileGenre] = genresID[fileGenre] + 1 if fileGenre in genresID else 1
 		fileID = genresID[fileGenre]
 		newFilename = fileGenre+"_"+str(fileID)
